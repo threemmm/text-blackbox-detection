@@ -61,3 +61,9 @@ class Detector:
             epochs.append(history[i + 1] - history[i])
 
         return epochs
+
+    def print_result(self):
+        detections = self.get_detections()
+        print("Num detections:", len(detections))
+        print("Queries per detection:", detections)
+        print("i-th query that caused detection:", self.history)
