@@ -1,5 +1,5 @@
 import setuptools
-from detection import __version__
+from textdetection import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()

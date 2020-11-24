@@ -10,7 +10,7 @@ class Detector:
         self.K = k
         self.threshold = threshold
         if self.threshold is None:
-            raise ValueError("Must provide explicit detection threshold! For sentences shorter than 20 words, "
+            raise ValueError("Must provide explicit textdetection threshold! For sentences shorter than 20 words, "
                              "10 is a good one")
 
         self.num_queries = 0
