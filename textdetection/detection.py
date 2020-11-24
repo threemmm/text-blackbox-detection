@@ -56,7 +56,11 @@ class Detector:
 
     def get_detections(self):
         history = self.history
-        epochs = [history[0]]
+        epochs = []
+        if not history:
+            print("No attack is detected!")
+        else:
+            epochs = [history[0]]
         for i in range(len(history) - 1):
             epochs.append(history[i + 1] - history[i])
 
