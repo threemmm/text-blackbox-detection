@@ -1,0 +1,19 @@
+# compiled python files
+__pycache__/
+
+# for Macs
+.DS_Store
+
+# build outputs for PyPI
+build/
+dist/
+
+# IDE files
+.c9*
+.idea/
+
+# Packaging
+*.egg-info/
+
+# Files from IDES
+.*.py
