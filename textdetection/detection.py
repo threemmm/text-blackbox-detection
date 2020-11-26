@@ -65,7 +65,7 @@ class Detector:
 
         k = self.K
         queries = np.array(self.buffer)[:, None]
-        dists = cdist(queries, np.reshape(query, (-1, 1)), self.str_distance).reshape(-1)
+        dists = cdist(queries, np.reshape(query, (-1, 1)), lambda a, b: self.str_distance(a[0], b[0])).reshape(-1)
         k_nearest_dists = np.partition(dists, k - 1)[:k, None]
         k_avg_dist = np.mean(k_nearest_dists)
 
@@ -138,7 +138,7 @@ class Detector:
 
     def __process_worker(self, input_each_buffer, query, queue):
         queries = np.array(input_each_buffer)[:, None]
-        dists = cdist(queries, np.reshape(query, (-1, 1)), self.str_distance).reshape(-1)
+        dists = cdist(queries, np.reshape(query, (-1, 1)), lambda a, b: self.str_distance(a[0], b[0])).reshape(-1)
         queue.put(dists)
 
     def clear_memory(self):
