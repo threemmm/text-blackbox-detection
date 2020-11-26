@@ -2,17 +2,20 @@ import numpy as np
 from fuzzywuzzy import fuzz
 from tqdm import tqdm
 from scipy.spatial.distance import cdist
+import pandas as pd
 
 
 class Detector:
+    """Create a new object of the class and call process() from the object"""
 
-    def __init__(self, k=30, threshold=None):
+    def __init__(self, k: int = 25, threshold: int = 15):
+        """
+        k is the number of nearest neighbors of each query that are accounted for detecting an attack
+        threshold is a number between 0 to 100 and shows that if the average of distances of k neighbers
+        are less than this value, an attack is detected.
+        """
         self.K = k
         self.threshold = threshold
-        if self.threshold is None:
-            raise ValueError("Must provide explicit textdetection threshold! For sentences shorter than 20 words, "
-                             "10 is a good one")
-
         self.num_queries = 0
         self.buffer = []
         self.history = []  # detected attacks
@@ -23,7 +26,29 @@ class Detector:
     def str_distance(a, b):
         return 100 - fuzz.partial_ratio(a, b)
 
-    def process(self, queries):
+    @staticmethod
+    def __check_type(data):
+        if isinstance(data, list):
+            if not data:
+                raise ValueError(f"Input {type(data)} is empty!")
+            elif not isinstance(data[0], str):
+                raise ValueError(f"Input {type(data[0])} is not acceptable!")
+        elif isinstance(data, pd.Series):
+            if data.empty:
+                raise ValueError(f"Input {type(data)} could not be empty!")
+            elif not isinstance(data.iloc[0], str):
+                raise ValueError(f"Input {type(data[0])} is not acceptable!")
+        elif isinstance(data, pd.DataFrame):
+            raise ValueError(
+                f"Input {type(data)} is not acceptable! One column of Strings or list of Strings is expected!")
+        elif isinstance(data, str):
+            raise ValueError(
+                f"Input cannot be a string, it is expected to be a list of strings or one column (DataFrame) of strings")
+
+    def process(self, queries, reset: bool = False):
+        if reset:
+            self.__init__(self.K, self.threshold)
+        self.__check_type(queries)
         for query in tqdm(queries):
             self.process_query(query)
 
@@ -35,16 +60,12 @@ class Detector:
 
         k = self.K
 
-        if len(self.buffer) > 0:
-            queries = np.array(self.buffer)[:, None]
-            dists = np.concatenate(cdist(queries, np.reshape(query, (-1, 1)), self.str_distance))
-
+        queries = np.array(self.buffer)[:, None]
+        dists = np.concatenate(cdist(queries, np.reshape(query, (-1, 1)), self.str_distance))
         k_nearest_dists = np.partition(dists, k - 1)[:k, None]
         k_avg_dist = np.mean(k_nearest_dists)
-
         self.buffer.append(query)
         self.num_queries += 1
-
         is_attack = k_avg_dist < self.threshold
         if is_attack:
             self.history.append(self.num_queries)
@@ -58,7 +79,7 @@ class Detector:
         history = self.history
         epochs = []
         if not history:
-            print("No attack is detected!")
+            print("\nNo attack is detected!")
         else:
             epochs = [history[0]]
         for i in range(len(history) - 1):
