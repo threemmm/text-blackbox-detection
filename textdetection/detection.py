@@ -3,6 +3,7 @@ from fuzzywuzzy import fuzz
 from tqdm import tqdm
 from scipy.spatial.distance import cdist
 import pandas as pd
+from multiprocessing import Process, Queue
 
 
 class Detector:
@@ -18,8 +19,11 @@ class Detector:
         self.threshold = threshold
         self.num_queries = 0
         self.buffer = []
+        self.list_of_buffers = []
+        self.chunk_size = 100
+        self.list_of_processes = []
+        self.history_attack = []
         self.history = []  # detected attacks
-        self.history_by_attack = []
         self.detected_dists = []  # detected knn distances
 
     @staticmethod
@@ -43,7 +47,8 @@ class Detector:
                 f"Input {type(data)} is not acceptable! One column of Strings or list of Strings is expected!")
         elif isinstance(data, str):
             raise ValueError(
-                f"Input cannot be a string, it is expected to be a list of strings or one column (DataFrame) of strings")
+                f"Input cannot be a string, it is expected to be a list of strings or"
+                f" one column (DataFrame) of strings")
 
     def process(self, queries, reset: bool = False):
         if reset:
@@ -59,11 +64,11 @@ class Detector:
             return False
 
         k = self.K
-
         queries = np.array(self.buffer)[:, None]
-        dists = np.concatenate(cdist(queries, np.reshape(query, (-1, 1)), self.str_distance))
+        dists = cdist(queries, np.reshape(query, (-1, 1)), self.str_distance).reshape(-1)
         k_nearest_dists = np.partition(dists, k - 1)[:k, None]
         k_avg_dist = np.mean(k_nearest_dists)
+
         self.buffer.append(query)
         self.num_queries += 1
         is_attack = k_avg_dist < self.threshold
@@ -72,14 +77,79 @@ class Detector:
             self.detected_dists.append(k_avg_dist)
             self.clear_memory()
 
+    def multi_process(self, queries, chunk: int = 75, reset: bool = False, sless: int = 0):
+        if not isinstance(chunk, int) or not isinstance(reset, bool):
+            raise ValueError(f"reset should be bool and chunk should be int!")
+        if reset:
+            self.__init__(self.K, self.threshold)
+        self.chunk_size = chunk
+        self.__check_type(queries)
+        for query in tqdm(queries):
+            self.multi_process_query(query, sless)
+
+    def multi_process_query(self, query, sless):
+        if not self.list_of_buffers and len(self.buffer) < self.K:
+            self.buffer.append(query)
+            self.num_queries += 1
+            return False
+
+        k = self.K
+        all_dists = []
+        queue = Queue()
+
+        if self.buffer:
+            buffer_process = Process(target=self.__process_worker, args=(self.buffer, query, queue))
+            buffer_process.start()
+
+        if self.list_of_buffers:
+            for each_buffer in self.list_of_buffers:
+                p = Process(target=self.__process_worker, args=(each_buffer, query, queue))
+                p.start()
+                self.list_of_processes.append(p)
+
+            for each_pr in self.list_of_processes:
+                each_pr.join()
+
+            self.list_of_processes = []
+
+        if self.buffer:
+            buffer_process.join()
+        while not queue.empty():
+            all_dists.append(queue.get())
+
+        dists = np.concatenate(all_dists)
+        k_nearest_dists = np.partition(dists, k - 1)[:k, None]
+        k_avg_dist = np.mean(k_nearest_dists)
+
+        self.buffer.append(query)
+        self.num_queries += 1
+
+        if len(self.buffer) >= self.chunk_size:
+            self.list_of_buffers.append(self.buffer)
+            self.buffer = []
+
+        if k_avg_dist < sless:
+            self.history_attack.append([self.num_queries, query, k_nearest_dists, k_avg_dist])
+        is_attack = k_avg_dist < self.threshold
+        if is_attack:
+            self.history.append(self.num_queries)
+            self.detected_dists.append(k_avg_dist)
+            self.clear_memory()
+
+    def __process_worker(self, input_each_buffer, query, queue):
+        queries = np.array(input_each_buffer)[:, None]
+        dists = cdist(queries, np.reshape(query, (-1, 1)), self.str_distance).reshape(-1)
+        queue.put(dists)
+
     def clear_memory(self):
         self.buffer = []
+        self.list_of_buffers = []
 
     def get_detections(self):
         history = self.history
         epochs = []
         if not history:
-            print("\nNo attack is detected!")
+            return epochs
         else:
             epochs = [history[0]]
         for i in range(len(history) - 1):
@@ -88,7 +158,15 @@ class Detector:
         return epochs
 
     def print_result(self):
-        detections = self.get_detections()
-        print("Num detections:", len(detections))
-        print("Queries per detection:", detections)
+        print("\n")
+        epochs = self.get_detections()
+        num_attacks = len(epochs)
+        if num_attacks == 0:
+            print("\n\033[32m---No attack is detected!---\033[00m")
+            print("\033[38;5;105mNum detections:", num_attacks, "\033[00m")
+        else:
+            print("\033[31m--->>>ATTACK DETECKTED!<<<---\033[00m")
+            print("\033[38;5;105mNum detections:", num_attacks, "\033[00m")
+
+        print("Queries per detection:", epochs)
         print("i-th query that caused detection:", self.history)
