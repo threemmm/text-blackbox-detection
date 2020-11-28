@@ -4,6 +4,7 @@ from tqdm import tqdm
 from scipy.spatial.distance import cdist
 import pandas as pd
 from multiprocessing import Process, Queue
+from time import sleep
 
 
 class Detector:
@@ -12,7 +13,7 @@ class Detector:
     def __init__(self, k: int = 25, threshold: int = 15):
         """
         k is the number of nearest neighbors of each query that are accounted for detecting an attack
-        threshold is a number between 0 to 100 and shows that if the average of distances of k neighbers
+        threshold is a number between 0 to 100 and shows that if the average of distances of k neighbors
         are less than this value, an attack is detected.
         """
         self.K = k
@@ -165,8 +166,113 @@ class Detector:
             print("\n\033[32m---No attack is detected!---\033[00m")
             print("\033[38;5;105mNum detections:", num_attacks, "\033[00m")
         else:
-            print("\033[31m--->>>ATTACK DETECKTED!<<<---\033[00m")
+            print("\033[31m--->>>ATTACK DETECTED!<<<---\033[00m")
             print("\033[38;5;105mNum detections:", num_attacks, "\033[00m")
 
         print("Queries per detection:", epochs)
         print("i-th query that caused detection:", self.history)
+
+
+class Thresholds:
+    def __init__(self):
+        self.list_of_k = []
+        self.list_of_thresholds = []
+        self.saved_history = []
+
+    @staticmethod
+    def str_distance(a, b):
+        return 100 - fuzz.partial_ratio(a, b)
+
+    # def chunks(lst, n):
+    #     """Yield successive n-sized chunks from lst."""
+    #     for i in range(0, len(lst), n):
+    #         yield lst[i:i + n]
+
+    def calculate_thresholds(self, data, k, chunk: int = 100, up_to_k: bool = False,
+                             multiprocess=False, num_process: int = 4, percentile = 0.1):
+        data = np.reshape(data.values, (-1, 1))
+        distances = []
+        process_list = []
+
+        if not multiprocess:
+            print('single processing')
+            for i in tqdm(range(0, len(data), chunk)):
+                new_distance_mat = cdist(data[i:i + chunk, :], data, lambda a, b: Detector.str_distance(a[0], b[0]))
+                new_distance_mat = np.sort(new_distance_mat, axis=-1)
+                distance_mat_k = new_distance_mat[:, :k]
+
+                distances.append(distance_mat_k)
+
+        elif multiprocess:
+            queue = Queue()
+            print(
+                f"\n\033[01;33m{len(data) // chunk + 1} Parts...\n~{num_process} Processes for each part\n\033[01;36mWait...\n\033[00m")
+
+            for i in range(0, len(data), chunk):
+                list_of_processes = []
+                new_data = data[i:i + chunk, :]
+                px = len(new_data) // num_process
+                for inx in range(0, len(new_data), px):
+                    tmp = new_data[inx:inx + px, :]
+                    self.saved_history.append([tmp, inx, inx + px, px])
+
+                    prc = Process(target=self.__process_worker_thresholds, args=(tmp, data, k, queue,))
+                    prc.start()
+                    list_of_processes.append(prc)
+
+                for each_pr in tqdm(list_of_processes, leave=True):
+                    each_pr.join()
+                while not queue.empty():
+                    distances.append(queue.get())
+
+            print("\n\033[38;5;105mWaiting for merging outputs.\033[00m")
+
+        else:
+            # todo
+            print("multiprocess= argument should set bool, e.g. multiprocess=True")
+            exit(1)
+            queue = Queue()
+            for i in tqdm(range(0, len(data), chunk)):
+                tmp = data[i:i + chunk, :]
+                prc = Process(target=self.__process_worker_thresholds, args=(tmp, data, k, queue,))
+                # sleep(1)
+                prc.start()
+                process_list.append(prc)
+
+                # sleep()
+            # print("\033[38;5;105m", len(list_of_processes), " Processe(s) is/are created.\033[00m\n-----")
+
+            print("\033[38;5;105mWaiting for merging outputs.\033[00m")
+            sleep(2)
+            # for pp in process_list:
+            #     if pp.is_alive():
+            #         pp.join()
+            #     else:
+            #         continue
+            process_list[0].join()
+            while not queue.empty():
+                distances.append(queue.get())
+
+        distance_matrix = np.concatenate(distances, axis=0)
+        print("Matrix length >>>>>>>> ", len(distance_matrix))
+
+        def __last_assigning():
+            dist_to_k_neighbors = distance_matrix[:, :k + 1]
+            avg_dist_to_k_neighbors = dist_to_k_neighbors.mean(axis=-1)
+            threshold = np.percentile(avg_dist_to_k_neighbors, percentile)
+            self.list_of_k.append(k)
+            self.list_of_thresholds.append(threshold)
+
+        if up_to_k:
+            for k in tqdm(range(0, k + 1)):
+                __last_assigning()
+        else:
+            __last_assigning()
+
+        return k, self.list_of_thresholds[-1]
+
+    def __process_worker_thresholds(self, data1, data2, k, queue):
+        new_distance_mat = cdist(data1, data2, lambda a, b: self.str_distance(a[0], b[0]))
+        new_distance_mat = np.sort(new_distance_mat, axis=-1)
+        distance_mat_k = new_distance_mat[:, :k]
+        queue.put(distance_mat_k)
