@@ -3,6 +3,8 @@ __pycache__/
 
 # for Macs
 .DS_Store
+#outputs
+outputs
 
 # build outputs for PyPI
 build/
