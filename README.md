@@ -13,4 +13,4 @@ This repo tries to detect black box attacks on text models.
 ### Requirements
 The main requirements are:
 - Python 3
-- fuzzywuzzy
+- Levenshtein
