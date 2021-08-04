@@ -5,12 +5,17 @@
 
 This repo tries to detect black box attacks on text models.
  It doesn't need any models, but a list of strings that 
- an attacker uses to find a perturbed versions 
- of sentences that fool the target model. It uses fuzzywuzzy package to 
- calculate similarity between different sentences.
+ an attacker uses to find perturbed versions 
+ of sentences that fool the target model. It uses Levenshtein package (ratio) to 
+ calculate similarity between different queries.
  
 
 ### Requirements
 The main requirements are:
 - Python 3
 - Levenshtein
+- Numpy
+- Pandas
+- Matplotlib
+- Scipy
+- tqdm

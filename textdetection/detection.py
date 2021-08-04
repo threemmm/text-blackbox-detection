@@ -53,9 +53,8 @@ class Detector:
 
     def __init__(self, k: int = 25, threshold: float = 15):
         """
-        k is the number of nearest neighbors of each query that are accounted for detecting an attack
-        threshold is a number between 0 to 100 and shows that if the average of distances of k neighbors
-        are less than this value, an attack is detected.
+        k is the number of nearest neighbors of each new query to be considered
+        threshold is a number at which an attack is detected if the distance of knn is higher.
         """
         self.K = k
         self.threshold = threshold
