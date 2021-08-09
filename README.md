@@ -1,7 +1,6 @@
 ## Adversarial examples detection on text (BlackBox Attacks)
 
 [![PyPI version](https://badge.fury.io/py/textdetection.svg)](https://badge.fury.io/py/textdetection)
-[![GitHub license](https://img.shields.io/github/license/threemmm/text-blackbox-detection)](https://github.com/threemmm/text-blackbox-detection/blob/master/LICENSE)
 
 This repo tries to detect black box attacks on text models.
  It doesn't need any models, but a list of strings that 
@@ -19,3 +18,6 @@ The main requirements are:
 - Matplotlib
 - Scipy
 - tqdm
+
+### Usage
+Example0 and Example_threshold are provided to show how to use the module. Other examples were used to carry out different experiments.  
