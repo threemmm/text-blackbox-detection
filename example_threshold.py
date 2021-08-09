@@ -1,4 +1,4 @@
-from textdetection.detection import Detector, Thresholds
+from textdetection.detection import Thresholds
 import pandas as pd
 import time
 import pickle
@@ -6,11 +6,11 @@ import logging
 import os
 from matplotlib import pyplot as plt
 
+
 def main():
     data_path = "../data/benign/imdb_cleaned_all.csv"
     # data_path="../data/benign/yelp_review_full_csv/mytest.csv"
-
-    len_df = 10000  # len(df)
+    len_df = 1000  # 10000 for imdb and 15000 for yelp
     name_file = "imdb"
     df = pd.read_csv(data_path)['text'][:len_df]
 
@@ -31,7 +31,7 @@ def main():
     start_time = time.time()
 
     k_, threshold = thd.calculate_thresholds(df, k=30, chunk=16, up_to_k=True,
-                                             multiprocess="multiprocess", num_process=8, pair="pdist", percentile=0.1)
+                                             multiprocess="pooling", num_process=8, pair="pdist", percentile=0.1)
     elapsed_time = time.time() - start_time
     logging.info(f"time\t>>>>\t{elapsed_time} s")
     print("time\t>>>>>>>>\t\033[44m\033[31m", elapsed_time, " s \033[00m")
@@ -65,5 +65,6 @@ def main():
         pickle.dump(results_of_k, fp)
         logging.info(f"The list of k values was saved into:  {results_of_k}")
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
