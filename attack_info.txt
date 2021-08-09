@@ -1,0 +1,44 @@
+# ATTACK SETUP
+# ##############
+# cnn-yelp_deepwordbug_sequences_2020-11-20-15-34
+# ATTACKER: deepwordbug
+# GOAL FUNCTION: untargeted_classification.UntargetedClassification
+# MODEL: WordCNNForClassification.
+# [Succeeded / Failed / Total] 875 / 44 / 1000: 100% 1000/1000 [28:45<00:00,  1.73s/it]
+# avg length: 1166.1961291182251
+# number of sentence: 150095
+# textattack: Loading pre-trained TextAttack CNN: cnn-yelp
+# textattack: Goal function <class 'textattack.goal_functions.classification.untargeted_classification.UntargetedClassification'> compatible with model WordCNNForClassification.
+# textattack: Logging sequences to CSV at path ./attacks/cnn-yelp_deepwordbug_sequences_2020-11-20-15-34.csv.
+# textattack: Load time: 9.77456545829773s
+# Reusing dataset yelp_polarity (downloadedData/datasets/yelp_polarity/plain_text/1.0.0/2b33212d89209ed1ea0522001bccc5f5a5c920dd9c326f3c828e67a22c51a98c)
+# textattack: Loading datasets dataset yelp_polarity, split test.
+# [Succeeded / Failed / Total] 875 / 44 / 1000: 100% 1000/1000 [28:45<00:00,  1.73s/it]
+# textattack: Attack time: 1731.6877031326294s
+# -----
+# DETECTION SETUP
+# #################
+# k=10, threshold=20
+# Num of detections: 13406
+# Average detection: 13.4
+
+
+# print("Num detections:", len(detections))
+# print("Queries per detection:", detections)
+# print("i-th query that caused detection:", detector.history)
+# Queries per detection: [31, 31, 58, 31, 31, 50, 47]
+# i-th query that caused detection: [31, 62, 120, 151, 182, 232, 279]
+
+# textattack: Downloading https://textattack.s3.amazonaws.com/models/classification/cnn/ag-news.
+# 100% 298M/298M [00:08<00:00, 33.4MB/s]
+# textattack: Unzipping file downloadedData/tmpn2zm61f9.zip to downloadedData/models/classification/cnn/ag-news.
+# textattack: Successfully saved models/classification/cnn/ag-news to cache.
+# textattack: Loading pre-trained TextAttack CNN: cnn-ag-news
+# textattack: Goal function <class 'textattack.goal_functions.classification.untargeted_classification.UntargetedClassification'> compatible with model WordCNNForClassification.
+# textattack: Logging sequences to CSV at path ./attacks/cnn-ag-news_deepwordbug_sequences_2020-11-30-18-29.csv.
+# textattack: Load time: 39.28120255470276s
+# Using custom data configuration default
+# Reusing dataset ag_news (downloadedData/datasets/ag_news/default/0.0.0/fb5c5e74a110037311ef5e904583ce9f8b9fbc1354290f97b4929f01b3f48b1a)
+# textattack: Loading datasets dataset ag_news, split test.
+# [Succeeded / Failed / Total] 898 / 10 / 1000: 100% 1000/1000 [06:20<00:00,  2.63it/s]
+# textattack: Attack time: 381.4261591434479s
