@@ -1,4 +1,4 @@
-from textdetection.detection import Detector, Thresholds
+from textdetection.detection import Detector
 import pandas as pd
 import time
 import logging
