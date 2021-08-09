@@ -1,4 +1,4 @@
-from textdetection.detection import Detector, Thresholds
+from textdetection.detection import Detector
 import pandas as pd
 
 data_path = "../data/suspicious/albert-base-v2-sst2_textbugger_sequences_2020-11-20-03-20.csv"  # text
