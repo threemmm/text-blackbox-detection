@@ -1,11 +1,8 @@
-from textdetection.detection import Detector, Thresholds
+from textdetection.detection import Detector
 import pandas as pd
 import time
 import pickle
 import logging
-import numpy as np
-import random
-from multiprocessing import Pool, Process
 import os
 from matplotlib import pyplot as plt
 
@@ -45,23 +42,22 @@ if True:
     file_name = f"glue"
     start_time = time.time()
     data_path = f"test_for_attack_30.csv"
-    data_path = "../data/benign/glue.csv" #sentence
+    data_path = "../data/benign/glue.csv"  # sentence
     data_path = "../data/benign/yelp_review_full_csv/mytest.csv"
     # for i in np.linspace(0.1, 0.4, num=20):
     data_with_path = [pd.read_csv(data_path)['text'][:1000], data_path]
-    for z in [10]:#, 50, 60]: #[10, 11, 12, 13, 14, 15]:
-        for i in [0.41, 0.42, 0.44, 0.46]: #[0.1, 0.2, 0.3, 0.4, 0.5]:#, 0.17, 0.22, 0.27, 0.3]:
+    for z in [10]:  # , 50, 60]: #[10, 11, 12, 13, 14, 15]:
+        for i in [0.41, 0.42, 0.44, 0.46]:  # [0.1, 0.2, 0.3, 0.4, 0.5]:#, 0.17, 0.22, 0.27, 0.3]:
             # K = random.randint(6, 30)
-            K= z
+            K = z
             THRESHOLD = i
-            # THRESHOLD = random.uniform(0.09, 0.42)
             # file_name = f"yelp"
             # data_path = f"../data/benign/yelp_review_full_csv/new_versions/{i}_" + file_name + ".csv"#text
             # data_path = f"../data/benign/glue_series/{i}_" + file_name + ".csv"#text
             # df_list_yelp.append([pd.read_csv(data_path)['text'], data_path])
             # data_with_path = [pd.read_csv(data_path)['sentence'], data_path]
             detector_inside = detect_process_log(data_with_path, k=K, threshold=THRESHOLD,
-                                                  multiprocess=True, chunk=80)
+                                                 multiprocess=True, chunk=80)
             # for ii in detector_inside.history:
             #     print(f"\nindex {ii}\n",data_with_path[0].iloc[ii])
             print(f">>>>>>>>>>> {i} process finished.")
@@ -103,40 +99,40 @@ if True:
         f.savefig(file_name_plot_PDF, bbox_inches='tight')
         logging.info(f"The plot was saved into:  {file_name_plot_PDF}")
 
-
-def Insert_row(row_number, df, row_value):
-    # Starting value of upper half
-    start_upper = 0
-
-    # End value of upper half
-    end_upper = row_number
-
-    # Start value of lower half
-    start_lower = row_number
-
-    # End value of lower half
-    end_lower = df.shape[0]
-
-    # Create a list of upper_half index
-    upper_half = [*range(start_upper, end_upper, 1)]
-
-    # Create a list of lower_half index
-    lower_half = [*range(start_lower, end_lower, 1)]
-
-    # Increment the value of lower half by 1
-    lower_half = [x.__add__(1) for x in lower_half]
-
-    # Combine the two lists
-    index_ = upper_half + lower_half
-
-    # Update the index of the dataframe
-    df.index = index_
-
-    # Insert a row at the end
-    df.loc[row_number] = row_value
-
-    # Sort the index labels
-    df = df.sort_index()
-
-    # return the dataframe
-    return df
+#
+# def Insert_row(row_number, df, row_value):
+#     # Starting value of upper half
+#     start_upper = 0
+#
+#     # End value of upper half
+#     end_upper = row_number
+#
+#     # Start value of lower half
+#     start_lower = row_number
+#
+#     # End value of lower half
+#     end_lower = df.shape[0]
+#
+#     # Create a list of upper_half index
+#     upper_half = [*range(start_upper, end_upper, 1)]
+#
+#     # Create a list of lower_half index
+#     lower_half = [*range(start_lower, end_lower, 1)]
+#
+#     # Increment the value of lower half by 1
+#     lower_half = [x.__add__(1) for x in lower_half]
+#
+#     # Combine the two lists
+#     index_ = upper_half + lower_half
+#
+#     # Update the index of the dataframe
+#     df.index = index_
+#
+#     # Insert a row at the end
+#     df.loc[row_number] = row_value
+#
+#     # Sort the index labels
+#     df = df.sort_index()
+#
+#     # return the dataframe
+#     return df
