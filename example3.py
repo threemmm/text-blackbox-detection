@@ -1,11 +1,9 @@
-from textdetection.detection import Detector, Thresholds
+from textdetection.detection import Detector
 import pandas as pd
 import time
 import pickle
 import logging
-import numpy as np
-import random
-from multiprocessing import Pool, Process
+
 import os
 from matplotlib import pyplot as plt
 
